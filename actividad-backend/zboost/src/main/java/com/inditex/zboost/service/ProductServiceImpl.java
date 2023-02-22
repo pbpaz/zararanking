@@ -6,10 +6,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -40,9 +37,20 @@ public class ProductServiceImpl implements ProductService {
 
         Map<String, Object> params = new HashMap<>();
 
-        String sql = "";
+        StringBuilder sql = new StringBuilder("SELECT ID, NAME, PRICE, CATEGORY, IMAGE_URL FROM Products");
 
-        return jdbcTemplate.query(sql, params, new BeanPropertyRowMapper<>(Product.class));
+        if(categories.isPresent() && categories.get().size()>0) {
+            sql.append(" WHERE upper(CATEGORY) IN (");
+            for(String category : categories.get()){
+                if (Objects.equals(category, categories.get().get(categories.get().size() - 1))) {
+                    sql.append("upper('").append(category).append("'))");
+                } else {
+                    sql.append("upper('").append(category).append("'),");
+                }
+            }
+        }
+
+        return jdbcTemplate.query(sql.toString(), params, new BeanPropertyRowMapper<>(Product.class));
     }
 
     @Override
@@ -51,7 +59,7 @@ public class ProductServiceImpl implements ProductService {
          * TODO: EJERCICIO 1.b) Recupera las distintas categorias de los productos disponibles.
          */
 
-        String sql = "";
+        String sql = "SELECT distinct(CATEGORY) FROM Products";
 
         return jdbcTemplate.queryForList(sql, (SqlParameterSource) null, String.class);
     }
